@@ -1,44 +1,63 @@
 #include <iostream>
 #include <vector>
+#include <cmath>
+using namespace std;
 
-const int MOD = 1e9 + 7;
+class SegTree
+{
+private:
+    int new_n;
+    vector<int> seg_tree;
+
+    void build(const vector<int> &arr, int index, int left_brunch, int right_brunch);
+
+public:
+    SegTree(vector<int> &arr, const int &n);
+    void print_st();
+};
 
 int main()
 {
     int n, m;
-    std::cin >> n >> m;
+    cin >> n >> m;
 
-    std::vector<int> a(n + 1, 0);
-    std::vector<int> prefix_sum(n + 1, 0);
+    vector<int> A;
+    A.resize(n, 1);
 
-    for (int i = 1; i <= m; ++i)
-    {
-        int t, l, r;
-        std::cin >> t >> l >> r;
+    unsigned int commands[m][3];
+    for (unsigned int i = 0; i < m; i++)
+        cin >> commands[i][0] >> commands[i][1] >> commands[i][2];
 
-        if (t == 1)
-        {
-            // Увеличиваем все элементы в диапазоне [l, r] на 1
-            prefix_sum[l] += 1;
-            prefix_sum[r + 1] -= 1;
-        }
-        else
-        {
-            // Выполняем все команды в диапазоне [l, r]
-            a[l] += prefix_sum[i];
-            a[l] %= MOD;
-            a[r + 1] -= prefix_sum[i];
-            a[r + 1] = (a[r + 1] + MOD) % MOD;
-        }
-    }
-
-    // Вычисляем окончательный массив A
-    for (int i = 1; i <= n; ++i)
-    {
-        a[i] += a[i - 1];
-        a[i] %= MOD;
-        std::cout << a[i] << " ";
-    }
+    SegTree st = SegTree(A, n);
+    st.print_st();
 
     return 0;
+}
+
+SegTree::SegTree(vector<int> &arr, const int &n)
+{
+    new_n = (int)pow(2, ceil(log2(n)));
+    seg_tree.resize(new_n * 2, 0);
+}
+
+void SegTree::build(const vector<int> &arr, int index, int left_brunch, int right_brunch)
+{
+    if (left_brunch == right_brunch - 1)
+    {
+        cout << index << " " << left_brunch << endl;
+        seg_tree[index] = arr[left_brunch];
+    }
+    else
+    {
+        int middle_brunch = (left_brunch + right_brunch) / 2;
+        build(arr, index * 2 + 1, left_brunch, middle_brunch);
+        build(arr, index * 2 + 2, middle_brunch, right_brunch);
+        seg_tree[index] = seg_tree[index * 2 + 1] + seg_tree[index * 2 + 2];
+    }
+}
+
+void SegTree::print_st()
+{
+    for (int elem : seg_tree)
+        cout << elem << " ";
 }
