@@ -12,7 +12,7 @@ private:
 public:
     SegTree(int arr[], const int &n);
 
-    int get(int index, int real_index, int left_brunch, int right_brunch) const;
+    int sum(int left, int right, int real_index, int left_brunch, int right_brunch) const;
     void set(int index, int real_index, int value, int left_brunch, int right_brunch);
 
     unsigned int get_n() const;
@@ -41,55 +41,53 @@ int main()
     fill_st(st, commands, m);
 
     for (int i = 0; i < n - 1; i++)
-        cout << st.get(i, 0, 0, st.get_n() - 1) << " ";
-    cout << st.get(n - 1, 0, 0, st.get_n() - 1) << endl;
+        cout << st.sum(0, i, 0, 0, st.get_n() - 1) << " ";
+    cout << st.sum(0, n - 1, 0, 0, st.get_n() - 1) << endl;
 
     return 0;
 }
 
 SegTree::SegTree(int arr[], const int &n)
 {
-    // Создание массива размера равному степени двойки и ближайшему к исходному
     this->n = trunc(pow(2, ceil(log2(n))));
 
     if (this->n < 2)
         this->n = 2;
-    // Заполнение массива нулями
+
     seg_tree.resize(this->n * 2, 0);
 }
 
-int SegTree::get(int index, int real_index, int left_brunch, int right_brunch) const
+int SegTree::sum(int left, int right, int real_index, int left_brunch, int right_brunch) const
 {
-    // Возвращение элемента по индексу
-    if (left_brunch == right_brunch)
+    if (right < left_brunch || left > right_brunch)
+        return 0;
+
+    if (left <= left_brunch && right_brunch <= right)
         return seg_tree[real_index];
 
-    int sum = seg_tree[real_index];
     int middle_brunch = (left_brunch + right_brunch) / 2;
-    index <= middle_brunch
-        ? sum += get(index, real_index * 2 + 1, left_brunch, middle_brunch)
-        : sum += get(index, real_index * 2 + 2, middle_brunch + 1, right_brunch);
-    return sum;
+    return sum(left, right, real_index * 2 + 1, left_brunch, middle_brunch) + sum(left, right, real_index * 2 + 2, middle_brunch + 1, right_brunch);
 }
 
-void SegTree::set(int left, int right, int real_index, int left_brunch, int right_brunch)
+void SegTree::set(int index, int real_index, int value, int left_brunch, int right_brunch)
 {
-    // Изменение дерева отрезков, увеличивая все элементы массива в данном промежутке
-    // Выход из рекурсии при выходе за указанный промежуток
-    if (right < left_brunch || left > right_brunch)
-        return;
-    // Увеличение значения узла и выход из рекурсии при попадании исходного промежутка
-    // в промежуток дерева отрезков
-    if (left <= left_brunch && right_brunch <= right)
+    if (left_brunch == right_brunch)
     {
-        seg_tree[real_index]++;
+        seg_tree[real_index] += value;
         return;
     }
-    // Если выше указанные условия не выполняются (т. е. данный промежуток частично лежит в промежутке дерева отрезков),
-    // то рекурсия делится надвое в две стороны
+
     int middle_brunch = (left_brunch + right_brunch) / 2;
-    set(left, right, real_index * 2 + 1, left_brunch, middle_brunch);
-    set(left, right, real_index * 2 + 2, middle_brunch + 1, right_brunch);
+    if (index <= middle_brunch)
+    {
+        set(index, real_index * 2 + 1, value, left_brunch, middle_brunch);
+    }
+    else
+    {
+        set(index, real_index * 2 + 2, value, middle_brunch + 1, right_brunch);
+    }
+
+    seg_tree[real_index] = seg_tree[real_index * 2 + 1] + seg_tree[real_index * 2 + 2];
 }
 
 unsigned int SegTree::get_n() const
@@ -133,7 +131,9 @@ void fill_st(SegTree &seg_tree, unsigned int commands[][3], unsigned int m, unsi
     {
         if (commands[i][0] == 1)
         {
-            seg_tree.set(commands[i][1], commands[i][2] - 1, 0, 0, seg_tree.get_n() - 1);
+            seg_tree.set(commands[i][1], 0, 1, 0, seg_tree.get_n() - 1);
+            seg_tree.set(commands[i][2], 0, -1, 0, seg_tree.get_n() - 1);
+            seg_tree.print_st();
         }
         else
         {
